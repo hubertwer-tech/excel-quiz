@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Excel w logistyce – quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+    }
+
+    /* 🔵 Znak wodny z logo MindSphere w tle */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 70vh;
+      height: 70vh;
+      transform: translate(-50%, -50%);
+      background-image: url('mindsphere-logo.jpg');
+      background-repeat: no-repeat;
+      background-size: contain;
+      opacity: 0.06;          /* bardzo delikatne */
+      pointer-events: none;   /* nie blokuje klikania */
+      z-index: 1;
+      filter: grayscale(100%);
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 24px 12px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .screen,
+    .quiz-container {
+      position: relative;
+      z-index: 10; /* nad znakiem wodnym */
+      max-width: 900px;
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.8);
+      border: 1px solid #1e293b;
+      background: radial-gradient(circle at top left, #0b1120, #020617);
+      padding: 24px 24px 32px;
+    }
+
+    /* EKRAN STARTOWY */
+    .start-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .start-subtitle {
+      font-size: 1rem;
+      color: #9ca3af;
+      margin-bottom: 16px;
+    }
+
+    .start-meta {
+      font-size: .9rem;
+      color: #cbd5f5;
+      margin-bottom: 24px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #4f46e5aa;
+      background: radial-gradient(circle at top left, #4f46e522, transparent);
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #c7d2fe;
+      margin-bottom: 12px;
+    }
+
+    .start-list {
+      margin: 0 0 24px;
+      padding-left: 18px;
+      font-size: .95rem;
+      color: #e5e7eb;
+    }
+
+    .start-list li { margin-bottom: 4px; }
+
+    .start-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: .85rem;
+      color: #94a3b8;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 10px 22px;
+      font-size: .95rem;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+      box-shadow: 0 10px 25px rgba(79,70,229,.5);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    /* NAGŁÓWEK QUIZU itd. – wzięte z Twojej wersji */
+
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .quiz-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #e5e7eb;
+    }
+
+    .quiz-subtitle {
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #22c55e33;
+      color: #bbf7d0;
+      background: radial-gradient(circle at top left, #22c55e33, transparent);
+    }
+
+    .question-header {
+      margin: 12px 0 16px;
+    }
+
+    .question-number {
+      font-size: 0.85rem;
+      color: #a5b4fc;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .question-text {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .answers {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 8px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .answer {
+      border-radius: 999px;
+      border: 1px solid #1e293b;
+      background: #020617;
+      display: flex;
+      align-items: center;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+    }
+
+    .answer:hover {
+      background: #020617;
+      border-color: #4f46e5;
+      transform: translateY(-1px);
+    }
+
+    .answer.selected {
+      border-color: #4f46e5;
+      background: radial-gradient(circle at top left, #4f46e533, #020617);
+    }
+
+    .answer.correct {
+      border-color: #22c55e;
+      background: radial-gradient(circle at top left, #22c55e33, #020617);
+    }
+
+    .answer.wrong {
+      border-color: #ef4444;
+      background: radial-gradient(circle at top left, #ef444433, #020617);
+    }
+
+    .answer-prefix {
+      font-weight: 700;
+      font-size: 0.9rem;
+      width: 28px;
+      text-align: center;
+      color: #9ca3af;
+    }
+
+    .answer-label {
+      font-size: 0.95rem;
+      color: #e5e7eb;
+    }
+
+    input[type="radio"] { display: none; }
+
+    .hint-box,
+    .explanation-box {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      border-radius: 12px;
+      padding: 8px 12px;
+      background: #020617;
+      color: #e5e7eb;
+      display: none;
+    }
+
+    .hint-box { border: 1px dashed #4b5563; }
+
+    .explanation-box {
+      border: 1px solid #15803d;
+      background: radial-gradient(circle at top left, #22c55e22, #020617);
+    }
+
+    .hint-title,
+    .explanation-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+
+    .hint-title { color: #facc15; }
+    .explanation-title { color: #bbf7d0; }
+
+    .controls {
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .controls-left,
+    .controls-right {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: white;
+    }
+
+    button.secondary {
+      background: #020617;
+      border: 1px solid #334155;
+      color: #e5e7eb;
+    }
+
+    button.ghost {
+      background: transparent;
+      border: 1px dashed #4b5563;
+      color: #cbd5f5;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    .progress {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      min-width: 180px;
+    }
+
+    .progress-bar {
+      margin-top: 6px;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #111827;
+      overflow: hidden;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      background: linear-gradient(90deg, #4f46e5, #22c55e);
+      width: 0%;
+      transition: width 0.2s ease-out;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 16px 14px;
+      border-radius: 16px;
+      border: 1px solid #1e293b;
+      background: radial-gradient(circle at top left, #22c55e22, #020617);
+      display: none;
+    }
+
+    .result-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #bbf7d0;
+    }
+
+    .result-score {
+      font-size: 0.95rem;
+      color: #e5e7eb;
+      margin-bottom: 6px;
+    }
+
+    .result-note {
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+
+    .review-list {
+      margin-top: 12px;
+      font-size: 0.9rem;
+      list-style: decimal;
+      padding-left: 18px;
+      color: #e5e7eb;
+    }
+
+    .review-list li { margin-bottom: 4px; }
+
+    .tag-ok { color: #22c55e; }
+    .tag-bad { color: #ef4444; }
+
+    @media (max-width: 640px) {
+      .screen,
+      .quiz-container {
+        padding: 18px 14px 22px;
+      }
+      .quiz-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .quiz-title {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- EKRAN STARTOWY -->
+  <div id="start-screen" class="screen">
+    <div class="pill">Excel w logistyce – quiz</div>
+    <h1 class="start-title">Excel w logistyce – quiz</h1>
+    <p class="start-subtitle">
+      Krótki test z pierwszego dnia szkolenia: funkcje bazowe, logika i analiza danych
+      w kontekście magazynu i łańcucha dostaw.
+    </p>
+    <p class="start-meta">
+      Autor: <strong>Hubert Wer</strong> • Program: <strong>MindSphere – Mistrzowski Excel w Logistyce</strong>
+    </p>
+    <ul class="start-list">
+      <li>10 pytań jednokrotnego wyboru.</li>
+      <li>Po każdej odpowiedzi od razu widzisz, czy odpowiedź jest poprawna.</li>
+      <li>Pod pytaniem pojawia się wyjaśnienie – dlaczego ta odpowiedź jest właściwa.</li>
+      <li>Na końcu dostajesz podsumowanie wyniku i listę odpowiedzi.</li>
+    </ul>
+    <div class="start-footer">
+      <button id="start-btn" class="btn btn-primary">▶ Start quizu</button>
+      <span>Tip: najlepiej działa w Chrome / Edge, w trybie pełnego ekranu.</span>
+    </div>
+  </div>
+
+  <!-- WŁAŚCIWY QUIZ -->
+  <div id="quiz-screen" class="quiz-container hidden">
+    <div class="quiz-header">
+      <div>
+        <div class="quiz-title">Logistyczny Quiz – Mistrzowski Excel</div>
+        <div class="quiz-subtitle">
+          Na podstawie materiału: <strong>„Mistrzowski Excel: Funkcje i Raportowanie w Logistyce”</strong>
+        </div>
+      </div>
+      <div class="badge">Dzień I – Moduł funkcji bazowych</div>
+    </div>
+
+    <div class="question-header">
+      <div id="question-number" class="question-number"></div>
+      <div id="question-text" class="question-text"></div>
+    </div>
+
+    <ul id="answers" class="answers"></ul>
+
+    <div id="hint-box" class="hint-box">
+      <div class="hint-title">Podpowiedź</div>
+      <div id="hint-text"></div>
+    </div>
+
+    <div id="explanation-box" class="explanation-box">
+      <div class="explanation-title" id="explanation-title"></div>
+      <div id="explanation-text"></div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-left">
+        <button id="prev-btn" class="secondary">&larr; Wstecz</button>
+        <button id="hint-btn" class="ghost">Podpowiedź 💡</button>
+      </div>
+      <div class="controls-right">
+        <div class="progress">
+          <span id="progress-text"></span>
+          <div class="progress-bar">
+            <div id="progress-bar-inner" class="progress-bar-inner"></div>
+          </div>
+        </div>
+        <button id="next-btn" class="primary">Dalej &rarr;</button>
+      </div>
+    </div>
+
+    <div id="result" class="result">
+      <div class="result-title">Twój wynik</div>
+      <div id="result-score" class="result-score"></div>
+      <div id="result-note" class="result-note"></div>
+      <ol id="review-list" class="review-list"></ol>
+    </div>
+  </div>
+
+  <script>
+    // --- dane quizu (Twoje oryginalne pytania) ---
+    const quizData = [
+      {
+        question:
+          "Zgodnie z analogią użytą w szkoleniu, czym ma stać się Excel dla logistyka?",
+        answers: [
+          "Mapą drogową do planowania podróży służbowych.",
+          "Notatnikiem do ręcznego zapisywania stanów magazynowych.",
+          "GPS-em w logistyce, oszczędzającym czas na rzecz podejmowania decyzji.",
+          "Poduszką powietrzną chroniącą przed wszystkimi błędami w danych."
+        ],
+        correctIndex: 2,
+        hint:
+          "Pomyśl o metaforze narzędzia, które prowadzi Cię do celu i automatyzuje żmudne liczenie.",
+        explanationCorrect:
+          "Zgadza się! Excel ma pełnić rolę GPS-u w logistyce – automatyzować analizy i dać Ci czas na decyzje strategiczne.",
+        explanationWrong:
+          "Nie do końca. W analogii ze szkolenia Excel ma być GPS-em logistyka: automatyzuje obliczenia i pomaga szybciej podejmować decyzje."
+      },
+      {
+        question:
+          "W magazynie na jedną paletę mieści się maksymalnie 80 kartonów. Firma musi wysłać 250 kartonów. Która formuła poprawnie obliczy minimalną liczbę palet potrzebnych do wysyłki?",
+        answers: [
+          "=ZAOKR.W.GÓRĘ(250/80; 0)",
+          "=250/80",
+          "=LICZ.JEŻELI(A1:A250; \"<=80\")",
+          "=ZAOKR(250/80; 0)"
+        ],
+        correctIndex: 0,
+        hint:
+          "Potrzebujesz zaokrąglenia zawsze w górę, aby zapewnić miejsce dla wszystkich kartonów.",
+        explanationCorrect:
+          "Poprawna odpowiedź. W logistyce zawsze zaokrąglamy w górę – 3,125 palety oznacza, że trzeba przygotować 4 palety.",
+        explanationWrong:
+          "Niezupełnie. Samo 250/80 daje 3,125, czyli ułamek palety. Musisz użyć ZAOKR.W.GÓRĘ, aby otrzymać 4 pełne palety."
+      },
+      {
+        question:
+          "Podczas przeciągania formuły obliczającej procentowy udział wagi produktu w wadze całkowitej zamówienia, użyto zapisu =$K$8 dla komórki z wagą całkowitą. Jaki jest główny cel użycia znaków dolara $ w tym przypadku?",
+        answers: [
+          "Aby przyspieszyć obliczenia wykonywane przez formułę.",
+          "Aby wskazać Excelowi, że w komórce $K$8 znajduje się wartość tekstowa.",
+          "Aby Excel automatycznie sformatował wynik jako walutę.",
+          "Aby zablokować odwołanie do komórki $K$8, tak aby nie zmieniało się ono podczas kopiowania formuły."
+        ],
+        correctIndex: 3,
+        hint:
+          "Zastanów się, jak zachowa się adres komórki, gdy przeciągasz formułę w dół.",
+        explanationCorrect:
+          "Dokładnie tak. Znak $ zamienia adres względny na bezwzględny – formuła zawsze odwołuje się do K8.",
+        explanationWrong:
+          "To nie to. Tutaj chodzi o zablokowanie adresu K8, aby przy przeciąganiu formuły w dół odwołanie do wagi całkowitej się nie zmieniało."
+      },
+      {
+        question:
+          "Jakie jest krytyczne ograniczenie funkcji WYSZUKAJ.PIONOWO, o którym należy bezwzględnie pamiętać podczas przygotowywania tabeli źródłowej?",
+        answers: [
+          "Funkcja potrafi zwracać tylko wartości liczbowe, a nie tekstowe.",
+          "Wartość, której szukamy (klucz), musi znajdować się w pierwszej kolumnie tabeli źródłowej.",
+          "Tabela źródłowa musi być posortowana rosnąco według pierwszej kolumny.",
+          "Tabela źródłowa nie może zawierać więcej niż 10 kolumn."
+        ],
+        correctIndex: 1,
+        hint:
+          "Zwróć uwagę na to, z której kolumny funkcja startuje, zanim przesunie się w prawo.",
+        explanationCorrect:
+          "Zgadza się. Szukana wartość musi być w pierwszej kolumnie obszaru wyszukiwania, inaczej WYSZUKAJ.PIONOWO nie zadziała.",
+        explanationWrong:
+          "Blisko, ale najważniejsze ograniczenie jest inne: szukana wartość (klucz) musi być w pierwszej kolumnie zakresu, w którym działa WYSZUKAJ.PIONOWO."
+      },
+      {
+        question:
+          "Firma otrzymała zlecenie w piątek, 10 maja. Czas dostawy produktu od dostawcy wynosi 3 dni robocze. Zakładając, że nie ma dodatkowych świąt, jaką datę dostawy zwróci formuła =DZIEŃ.ROBOCZY(\"2025-05-10\"; 3)?",
+        answers: [
+          "Poniedziałek, 12 maja",
+          "Wtorek, 13 maja",
+          "Środa, 14 maja",
+          "Niedziela, 11 maja"
+        ],
+        correctIndex: 2,
+        hint:
+          "Piątek jest dniem roboczym, ale weekend nie jest liczony. Odlicz trzy dni od poniedziałku.",
+        explanationCorrect:
+          "Tak jest. Funkcja DZIEŃ.ROBOCZY liczy tylko dni od poniedziałku do piątku, więc po piątku 10.05 wypada środa 14.05.",
+        explanationWrong:
+          "Nie do końca. DZIEŃ.ROBOCZY pomija weekend, więc po piątku 10.05 liczy poniedziałek, wtorek i środę – wynik to 14.05."
+      },
+      {
+        question:
+          "W raporcie logistycznym pojawia się błąd #N/A, ponieważ funkcja WYSZUKAJ.PIONOWO nie znalazła jednego z ID dostawcy. Jaką funkcją należy \"opatulić\" istniejącą formułę, aby zamiast błędu wyświetlić komunikat \"Brak w Bazie!\"?",
+        answers: ["SUMA.JEŻELI", "ORAZ", "JEŻELI.BŁĄD", "JEŻELI"],
+        correctIndex: 2,
+        hint:
+          "Chodzi o funkcję, która przechwytuje każdy błąd formuły i pozwala wstawić własny tekst w zamian.",
+        explanationCorrect:
+          "Dokładnie. JEŻELI.BŁĄD pozwala zamienić wynik błędu (np. #N/A) na przyjazny komunikat, np. \"Brak w Bazie!\".",
+        explanationWrong:
+          "To nie ta funkcja. Najwygodniej użyć JEŻELI.BŁĄD – otulasz nią WYSZUKAJ.PIONOWO i zamiast #N/A pokazujesz własny tekst."
+      },
+      {
+        question:
+          "Jaka jest główna zaleta użycia funkcji SUMA.ILOCZYNÓW do obliczenia całkowitej wartości zamówienia (suma iloczynów Cena * Ilość dla wielu produktów)?",
+        answers: [
+          "Jest jedyną funkcją, która może mnożyć wartości z różnych arkuszy.",
+          "Działa znacznie szybciej niż standardowe mnożenie i sumowanie.",
+          "Oblicza wartość całkowitą w jednej komórce, eliminując potrzebę tworzenia dodatkowej kolumny pomocniczej.",
+          "Automatycznie ignoruje wiersze zawierające błędy lub tekst."
+        ],
+        correctIndex: 2,
+        hint:
+          "Chodzi o to, że nie potrzebujesz osobnej kolumny z iloczynem Cena * Ilość.",
+        explanationCorrect:
+          "Zgadza się. SUMA.ILOCZYNÓW pozwala policzyć łączną wartość zamówienia w jednej komórce, bez dodatkowej kolumny pomocniczej.",
+        explanationWrong:
+          "Niekoniecznie. Kluczową zaletą SUMA.ILOCZYNÓW jest to, że w jednej komórce mnoży ceny przez ilości i od razu sumuje wynik."
+      },
+      {
+        question:
+          "Aby oznaczyć produkt jako \"PILNY BRAK (DROGI!)\", analityk musi sprawdzić dwa warunki jednocześnie: stan zapasów jest poniżej minimum ORAZ cena jednostkowa przekracza 50 zł. Którą funkcję logiczną należy zagnieździć w formule JEŻELI, aby poprawnie to zaimplementować?",
+        answers: ["PRAWDA", "JEŻELI.BŁĄD", "ORAZ", "LUB"],
+        correctIndex: 2,
+        hint:
+          "Oba warunki muszą być jednocześnie spełnione – niski stan i wysoka cena.",
+        explanationCorrect:
+          "Tak. Funkcja ORAZ sprawdza, czy oba warunki są prawdziwe – dopiero wtedy JEŻELI zwróci komunikat o pilnym, drogim braku.",
+        explanationWrong:
+          "To nie to. Tu potrzebujesz AND/ORAZ, bo komunikat ma się pojawić tylko wtedy, gdy jednocześnie zapas jest poniżej minimum i cena przekracza 50 zł."
+      },
+      {
+        question:
+          "W jaki sposób, według szkolenia, podwójny minus (--) jest wykorzystywany w zaawansowanych formułach, takich jak SUMA.ILOCZYNÓW?",
+        answers: [
+          "Do usunięcia pustych komórek z analizowanego zakresu.",
+          "Do zamiany wartości logicznych PRAWDA/FAŁSZ na liczby 1/0.",
+          "Do zasygnalizowania Excelowi, że jest to formuła tablicowa.",
+          "Do konwersji liczb dodatnich na ujemne wewnątrz formuły."
+        ],
+        correctIndex: 1,
+        hint:
+          "Podwójny minus pomaga potraktować wynik porównań (PRAWDA/FAŁSZ) jak liczby w obliczeniach.",
+        explanationCorrect:
+          "Zgadza się. Podwójny minus konwertuje PRAWDA/FAŁSZ na 1/0, dzięki czemu można z nimi liczyć w SUMA.ILOCZYNÓW.",
+        explanationWrong:
+          "To nie o znaki ujemne chodzi. Podwójny minus robi z wartości logicznych PRAWDA/FAŁSZ liczby 1/0, które można dalej mnożyć i sumować."
+      },
+      {
+        question:
+          "Celem Dnia I szkolenia jest zbudowanie \"statycznego raportu\". Co to oznacza w kontekście przedstawionej agendy?",
+        answers: [
+          "Napisanie raportu tekstowego podsumowującego analizy logistyczne.",
+          "Przygotowanie raportu, który jest \"migawką\" sytuacji na dany moment, opartą na stałych formułach.",
+          "Zaprojektowanie dashboardu z dynamicznymi wykresami i filtrami.",
+          "Stworzenie raportu, którego nie można edytować po zapisaniu."
+        ],
+        correctIndex: 1,
+        hint:
+          "Chodzi o raport oparty na formułach, ale jeszcze bez elementów typu dashboard i slicery.",
+        explanationCorrect:
+          "Dokładnie. Statyczny raport to migawka sytuacji na dany moment – zbudowana na formułach, ale jeszcze bez dynamicznej interakcji.",
+        explanationWrong:
+          "Nie całkiem. Statyczny raport w tym kontekście to arkusz z formułami pokazujący stan na konkretną datę, ale bez rozbudowanego dashboardu."
+      }
+    ];
+
+    let currentQuestion = 0;
+    const userAnswers = new Array(quizData.length).fill(null);
+    const answered = new Array(quizData.length).fill(false);
+    let quizFinished = false;
+
+    // elementy ekranu startowego
+    const startScreen = document.getElementById("start-screen");
+    const startBtn = document.getElementById("start-btn");
+    const quizScreen = document.getElementById("quiz-screen");
+
+    startBtn.addEventListener("click", () => {
+      startScreen.classList.add("hidden");
+      quizScreen.classList.remove("hidden");
+      renderQuestion();
+    });
+
+    // elementy quizu
+    const questionNumberEl = document.getElementById("question-number");
+    const questionTextEl = document.getElementById("question-text");
+    const answersEl = document.getElementById("answers");
+    const prevBtn = document.getElementById("prev-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const hintBtn = document.getElementById("hint-btn");
+    const hintBox = document.getElementById("hint-box");
+    const hintTextEl = document.getElementById("hint-text");
+    const explanationBox = document.getElementById("explanation-box");
+    const explanationTitleEl = document.getElementById("explanation-title");
+    const explanationTextEl = document.getElementById("explanation-text");
+    const progressTextEl = document.getElementById("progress-text");
+    const progressBarInner = document.getElementById("progress-bar-inner");
+    const resultEl = document.getElementById("result");
+    const resultScoreEl = document.getElementById("result-score");
+    const resultNoteEl = document.getElementById("result-note");
+    const reviewListEl = document.getElementById("review-list");
+
+    function renderQuestion() {
+      const q = quizData[currentQuestion];
+
+      questionNumberEl.textContent = `Pytanie ${currentQuestion + 1} z ${quizData.length}`;
+      questionTextEl.textContent = q.question;
+
+      answersEl.innerHTML = "";
+      const prefixLabels = ["A", "B", "C", "D"];
+
+      q.answers.forEach((answer, index) => {
+        const li = document.createElement("li");
+        li.className = "answer";
+
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "answer";
+        input.id = `answer-${index}`;
+        input.value = index;
+
+        const label = document.createElement("label");
+        label.setAttribute("for", `answer-${index}`);
+        label.className = "answer-label-wrapper";
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "8px";
+        label.style.width = "100%";
+
+        const prefixSpan = document.createElement("span");
+        prefixSpan.className = "answer-prefix";
+        prefixSpan.textContent = prefixLabels[index];
+
+        const textSpan = document.createElement("span");
+        textSpan.className = "answer-label";
+        textSpan.textContent = answer;
+
+        label.appendChild(prefixSpan);
+        label.appendChild(textSpan);
+        li.appendChild(input);
+        li.appendChild(label);
+
+        li.addEventListener("click", () => {
+          if (quizFinished || answered[currentQuestion]) return;
+          handleAnswerClick(index);
+        });
+
+        answersEl.appendChild(li);
+      });
+
+      hintBox.style.display = "none";
+      hintTextEl.textContent = "";
+      explanationBox.style.display = "none";
+      explanationTextEl.textContent = "";
+      explanationTitleEl.textContent = "";
+
+      if (userAnswers[currentQuestion] !== null) {
+        const idx = userAnswers[currentQuestion];
+        const li = answersEl.children[idx];
+        if (li) {
+          li.classList.add("selected");
+          const input = li.querySelector("input");
+          if (input) input.checked = true;
+        }
+        if (answered[currentQuestion]) {
+          highlightAnswers();
+          showExplanation();
+        }
+      }
+
+      prevBtn.disabled = currentQuestion === 0;
+      nextBtn.textContent =
+        currentQuestion === quizData.length - 1 ? "Zakończ quiz ✔" : "Dalej →";
+
+      progressTextEl.textContent = `Postęp: ${currentQuestion + 1} / ${quizData.length}`;
+      const progressPercent = ((currentQuestion + 1) / quizData.length) * 100;
+      progressBarInner.style.width = progressPercent + "%";
+    }
+
+    function handleAnswerClick(index) {
+      userAnswers[currentQuestion] = index;
+      answered[currentQuestion] = true;
+
+      document.querySelectorAll(".answer").forEach((el) =>
+        el.classList.remove("selected")
+      );
+      const li = answersEl.children[index];
+      if (li) {
+        li.classList.add("selected");
+        const input = li.querySelector("input");
+        if (input) input.checked = true;
+      }
+
+      highlightAnswers();
+      showExplanation();
+    }
+
+    function showHint() {
+      const q = quizData[currentQuestion];
+      hintTextEl.textContent = q.hint;
+      hintBox.style.display = "block";
+    }
+
+    function showExplanation() {
+      const q = quizData[currentQuestion];
+      const userIdx = userAnswers[currentQuestion];
+      if (userIdx === null) return;
+
+      const correct = userIdx === q.correctIndex;
+      explanationTitleEl.textContent = correct ? "Zgadza się!" : "Niezupełnie...";
+      explanationTextEl.textContent = correct ? q.explanationCorrect : q.explanationWrong;
+      explanationBox.style.display = "block";
+    }
+
+    function finishQuiz() {
+      quizFinished = true;
+      highlightAnswers();
+
+      const total = quizData.length;
+      let correct = 0;
+      const details = [];
+
+      quizData.forEach((q, index) => {
+        const userIdx = userAnswers[index];
+        const ok = userIdx === q.correctIndex;
+        if (ok) correct++;
+
+        const letters = ["A", "B", "C", "D"];
+        const correctLetter = letters[q.correctIndex];
+        const userLetter = userIdx !== null ? letters[userIdx] : "—";
+
+        details.push({ index, ok, correctLetter, userLetter });
+      });
+
+      const percent = Math.round((correct / total) * 100);
+      resultScoreEl.textContent = `Poprawne odpowiedzi: ${correct} z ${total} (${percent}%).`;
+
+      let note;
+      if (percent === 100) {
+        note = "Perfekcyjnie! Excel faktycznie jest Twoim GPS-em w logistyce 🚀";
+      } else if (percent >= 80) {
+        note = "Świetnie! Znasz większość funkcji – pojedyncze tematy warto tylko doszlifować.";
+      } else if (percent >= 60) {
+        note = "Nieźle – fundamenty są, ale przyda się powtórka modułu z funkcji bazowych.";
+      } else {
+        note = "Dobra baza do nauki. Po warsztacie zrobimy jeszcze jedną rundę quizu 🙂";
+      }
+      resultNoteEl.textContent = note;
+
+      reviewListEl.innerHTML = "";
+      details.forEach((d) => {
+        const li = document.createElement("li");
+        const spanStatus = document.createElement("span");
+        spanStatus.textContent = d.ok ? "[OK]" : "[X]";
+        spanStatus.className = d.ok ? "tag-ok" : "tag-bad";
+        li.appendChild(spanStatus);
+        li.appendChild(
+          document.createTextNode(
+            ` – P${d.index + 1}: Twoja: ${d.userLetter}, poprawna: ${d.correctLetter}`
+          )
+        );
+        reviewListEl.appendChild(li);
+      });
+
+      resultEl.style.display = "block";
+    }
+
+    function highlightAnswers() {
+      const q = quizData[currentQuestion];
+      const answersLis = document.querySelectorAll(".answer");
+
+      answersLis.forEach((li, idx) => {
+        li.classList.remove("correct", "wrong");
+        if (idx === q.correctIndex) li.classList.add("correct");
+        if (userAnswers[currentQuestion] === idx && idx !== q.correctIndex) {
+          li.classList.add("wrong");
+        }
+      });
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        renderQuestion();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (!answered[currentQuestion]) {
+        alert("Zaznacz odpowiedź, zanim przejdziesz dalej 🙂");
+        return;
+      }
+
+      if (currentQuestion < quizData.length - 1) {
+        currentQuestion++;
+        renderQuestion();
+      } else if (!quizFinished) {
+        finishQuiz();
+        nextBtn.textContent = "Rozwiąż ponownie";
+      } else {
+        // restart quizu
+        for (let i = 0; i < userAnswers.length; i++) {
+          userAnswers[i] = null;
+          answered[i] = false;
+        }
+        currentQuestion = 0;
+        quizFinished = false;
+        resultEl.style.display = "none";
+        renderQuestion();
+      }
+    });
+
+    hintBtn.addEventListener("click", () => {
+      if (hintBox.style.display === "block") {
+        hintBox.style.display = "none";
+      } else {
+        showHint();
+      }
+    });
+
+    // UWAGA: nie wywołujemy renderQuestion() tutaj – start robi przycisk START
+  </script>
+</body>
+</html>
